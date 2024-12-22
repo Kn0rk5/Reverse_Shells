@@ -1,0 +1,6 @@
+TODO:
+
++Improve code
++Add try-except for Connection-Refused/Aborted
++Add en/de-cryption for data exchange
++Improve Code
